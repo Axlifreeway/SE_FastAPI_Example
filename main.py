@@ -1,26 +1,37 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from transformers import pipeline
-from pydantic import BaseModel
+from src.models import Item
 
+def init_fastapi():
+    app = FastAPI()
 
-class Item(BaseModel):
-    text: str
+    return app
 
+def init_model(model_name):
+    try:
+        classifier = pipeline(model_name)
+    except Exception as ex:
+        return None
 
-app = FastAPI()
-classifier = pipeline("sentiment-analysis")
+    return classifier
 
+app = init_fastapi()
+classifier = init_model("sentiment-analysis")
 
 @app.get("/")
 def root():
     return {"FastApi service started!"}
 
-
 @app.get("/{text}")
 def get_params(text: str):
-    return classifier(text)
+    if classifier:
+        return classifier(text)
+    else:
+        raise HTTPException(status_code=500, detail="Model not found!")
 
-
-@app.post("/predict/")
+@app.post("/predict")
 def predict(item: Item):
-    return classifier(item.text)
+    if classifier:
+        return classifier(item.text)
+    else:
+        raise HTTPException(status_code=500, detail="Model not found!")    
