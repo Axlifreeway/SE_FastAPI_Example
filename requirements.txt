@@ -1,0 +1,5 @@
+fastapi
+transformers
+pydantic
+requests
+streamlit
